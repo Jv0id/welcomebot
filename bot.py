@@ -68,7 +68,7 @@ def check(update, context, override_lock=None):
 
     if chat_id > 0:
         send_async(
-            context, chat_id=chat_id, text="请先把我加入群组!",
+            context, chat_id=chat_id, text="请先把我加入群组!\nPlease add me to a group first!",
         )
         return False
 
@@ -79,7 +79,7 @@ def check(update, context, override_lock=None):
             send_async(
                 context,
                 chat_id=chat_id,
-                text="抱歉，只有邀请机器人进入群组的人可以更改设置。",
+                text="抱歉，只有邀请机器人进入群组的人可以更改设置。\nSorry, only the person who invited me can do that.",
             )
         return False
 
@@ -103,10 +103,10 @@ def welcome(update, context, new_member):
 
     # Use default message if there's no custom one set
     if text is None:
-        text = "你好 @$username! 欢迎加入 $title 😊"
+        text = "你好 $username! 欢迎加入 $title 😊\nHello $username! Welcome to $title 😊"
 
     # Replace placeholders and send message
-    text = text.replace("$username", new_member.username)
+    text = text.replace("$username", new_member.first_name)
     text = text.replace("$title", message.chat.title)
     send_async(context, chat_id=chat_id, text=text, parse_mode=ParseMode.HTML)
 
@@ -133,10 +133,10 @@ def goodbye(update, context):
 
     # Use default message if there's no custom one set
     if text is None:
-        text = "拜拜了您, $username!"
+        text = "拜拜了您, $username!\nFuck off, $username"
 
     # Replace placeholders and send message
-    text = text.replace("$username", message.left_chat_member.username)
+    text = text.replace("$username", message.left_chat_member.first_name)
     text = text.replace("$title", message.chat.title)
     send_async(context, chat_id=chat_id, text=text, parse_mode=ParseMode.HTML)
 
@@ -160,13 +160,14 @@ def introduce(update, context):
     text = (
         f"你好 {update.message.chat.title}! "
         "现在我会用一条友好的消息来欢迎每一个进入这个聊天的人 😊 \n使用/help 来获取更多信息!"
+        f"Hello {update.message.chat.title}! "
+        "I will now greet anyone who joins this chat with a nice message 😊 \nCheck the /help command for more info!"
     )
     send_async(context, chat_id=chat_id, text=text)
 
 
 # Print help text
 def help(update, context):
-
     chat_id = update.message.chat.id
     chat_str = str(chat_id)
     if (
@@ -201,7 +202,10 @@ def set_welcome(update, context):
             context,
             chat_id=chat_id,
             text="你需要发送一条信息! 比如:\n"
-                 "<code>/welcome 你好， @$username, 欢迎加入 "
+                 "<code>/welcome 你好， $username, 欢迎加入 "
+                 "$title!</code>\n\n"
+                 "You need to send a message, too! For example:\n"
+                 "<code>/welcome Hello $username, welcome to "
                  "$title!</code>",
             parse_mode=ParseMode.HTML,
         )
@@ -232,7 +236,9 @@ def set_goodbye(update, context):
             context,
             chat_id=chat_id,
             text="你需要发送一条信息! 比如:\n"
-                 "<code>/goodbye 拜拜了您, $username!</code>",
+                 "<code>/goodbye 拜拜了您, $username!</code>\n\n"
+                 "You need to send a message, too! For example:\n"
+                 "<code>/goodbye Fuck off, $username!</code>",
             parse_mode=ParseMode.HTML,
         )
         return
