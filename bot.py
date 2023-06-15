@@ -1,35 +1,28 @@
 #!/usr/bin/env python3
 import logging
-from time import sleep
-import traceback
-import sys
 from html import escape
 
 import pickledb
-
-from telegram import ParseMode, TelegramError, Update
+from telegram import ParseMode, TelegramError
 from telegram.ext import Updater, MessageHandler, CommandHandler, Filters
 from telegram.ext.dispatcher import run_async
 
-from config import BOTNAME, TOKEN
+from config import BOT_NAME, TOKEN
 
 help_text = (
-    "Welcomes everyone that enters a group chat that this bot is a "
-    "part of. By default, only the person who invited the bot into "
-    "the group is able to change settings.\nCommands:\n\n"
-    "/welcome - Set welcome message\n"
-    "/goodbye - Set goodbye message\n"
-    "/disable\\_goodbye - Disable the goodbye message\n"
-    "/lock - Only the person who invited the bot can change messages\n"
-    "/unlock - Everyone can change messages\n"
-    '/quiet - Disable "Sorry, only the person who..." '
-    "& help messages\n"
-    '/unquiet - Enable "Sorry, only the person who..." '
-    "& help messages\n\n"
-    "You can use _$username_ and _$title_ as placeholders when setting"
-    " messages. [HTML formatting]"
-    "(https://core.telegram.org/bots/api#formatting-options) "
-    "is also supported.\n"
+    "用于欢迎每一个加入群组的\"欢迎机器人\""
+    "默认情况下，只有邀请机器人进入群组的人可以更改设置 \nCommands:\n\n"
+    "/welcome - 设置欢迎信息\n"
+    "/goodbye - 设置离群信息\n"
+    "/disable\\_goodbye - 关闭离群信息发送\n"
+    "/lock - 只有邀请机器人进入群组的人可以更改设置\n"
+    "/unlock - 每个人都可以设置欢迎信息\n"
+    '/quiet - 关闭 "抱歉，只有邀请机器人进入群组的人可以更改设置" 消息'
+    "和帮助信息\n"
+    '/unquiet - 开启 "抱歉，只有邀请机器人进入群组的人可以更改设置" 消息'
+    "和帮助信息\n\n"
+    "你可以使用 _$username_ 和 _$title_ 来设置消息. \n支持使用[HTML formatting]"
+    "(https://core.telegram.org/bots/api#formatting-options) 来设置信息\n"
 )
 
 """
@@ -49,7 +42,6 @@ db = pickledb.load("bot.db", True)
 if not db.get("chats"):
     db.set("chats", [])
 
-# Set up logging
 root = logging.getLogger()
 root.setLevel(logging.INFO)
 
@@ -76,7 +68,7 @@ def check(update, context, override_lock=None):
 
     if chat_id > 0:
         send_async(
-            context, chat_id=chat_id, text="Please add me to a group first!",
+            context, chat_id=chat_id, text="请先把我加入群组!",
         )
         return False
 
@@ -87,7 +79,7 @@ def check(update, context, override_lock=None):
             send_async(
                 context,
                 chat_id=chat_id,
-                text="Sorry, only the person who invited me can do that.",
+                text="抱歉，只有邀请机器人进入群组的人可以更改设置。",
             )
         return False
 
@@ -97,7 +89,6 @@ def check(update, context, override_lock=None):
 # Welcome a user to the chat
 def welcome(update, context, new_member):
     """ Welcomes a user to the chat """
-
     message = update.message
     chat_id = message.chat.id
     logger.info(
@@ -112,10 +103,10 @@ def welcome(update, context, new_member):
 
     # Use default message if there's no custom one set
     if text is None:
-        text = "Hello $username! Welcome to $title 😊"
+        text = "你好 @$username! 欢迎加入 $title 😊"
 
     # Replace placeholders and send message
-    text = text.replace("$username", new_member.first_name)
+    text = text.replace("$username", new_member.username)
     text = text.replace("$title", message.chat.title)
     send_async(context, chat_id=chat_id, text=text, parse_mode=ParseMode.HTML)
 
@@ -142,15 +133,14 @@ def goodbye(update, context):
 
     # Use default message if there's no custom one set
     if text is None:
-        text = "Goodbye, $username!"
+        text = "拜拜了您, $username!"
 
     # Replace placeholders and send message
-    text = text.replace("$username", message.left_chat_member.first_name)
+    text = text.replace("$username", message.left_chat_member.username)
     text = text.replace("$title", message.chat.title)
     send_async(context, chat_id=chat_id, text=text, parse_mode=ParseMode.HTML)
 
 
-# Introduce the bot to a chat its been added to
 def introduce(update, context):
     """
     Introduces the bot to a chat its been added to and saves the user id of the
@@ -168,22 +158,20 @@ def introduce(update, context):
     db.set(str(chat_id) + "_lck", True)
 
     text = (
-        f"Hello {update.message.chat.title}! "
-        "I will now greet anyone who joins this chat with a "
-        "nice message 😊 \nCheck the /help command for more info!"
+        f"你好 {update.message.chat.title}! "
+        "现在我会用一条友好的消息来欢迎每一个进入这个聊天的人 😊 \n使用/help 来获取更多信息!"
     )
     send_async(context, chat_id=chat_id, text=text)
 
 
 # Print help text
 def help(update, context):
-    """ Prints help text """
 
     chat_id = update.message.chat.id
     chat_str = str(chat_id)
     if (
-        not db.get(chat_str + "_quiet")
-        or db.get(chat_str + "_adm") == update.message.from_user.id
+            not db.get(chat_str + "_quiet")
+            or db.get(chat_str + "_adm") == update.message.from_user.id
     ):
         send_async(
             context,
@@ -212,9 +200,9 @@ def set_welcome(update, context):
         send_async(
             context,
             chat_id=chat_id,
-            text="You need to send a message, too! For example:\n"
-            "<code>/welcome Hello $username, welcome to "
-            "$title!</code>",
+            text="你需要发送一条信息! 比如:\n"
+                 "<code>/welcome 你好， @$username, 欢迎加入 "
+                 "$title!</code>",
             parse_mode=ParseMode.HTML,
         )
         return
@@ -222,7 +210,7 @@ def set_welcome(update, context):
     # Put message into database
     db.set(str(chat_id), message)
 
-    send_async(context, chat_id=chat_id, text="Got it!")
+    send_async(context, chat_id=chat_id, text="设置完成!")
 
 
 # Set custom message
@@ -243,8 +231,8 @@ def set_goodbye(update, context):
         send_async(
             context,
             chat_id=chat_id,
-            text="You need to send a message, too! For example:\n"
-            "<code>/goodbye Goodbye, $username!</code>",
+            text="你需要发送一条信息! 比如:\n"
+                 "<code>/goodbye 拜拜了您, $username!</code>",
             parse_mode=ParseMode.HTML,
         )
         return
@@ -252,7 +240,7 @@ def set_goodbye(update, context):
     # Put message into database
     db.set(str(chat_id) + "_bye", message)
 
-    send_async(context, chat_id=chat_id, text="Got it!")
+    send_async(context, chat_id=chat_id, text="设置完成!")
 
 
 def disable_goodbye(update, context):
@@ -267,7 +255,7 @@ def disable_goodbye(update, context):
     # Disable goodbye message
     db.set(str(chat_id) + "_bye", False)
 
-    send_async(context, chat_id=chat_id, text="Got it!")
+    send_async(context, chat_id=chat_id, text="设置完成!")
 
 
 def lock(update, context):
@@ -282,7 +270,7 @@ def lock(update, context):
     # Lock the bot for this chat
     db.set(str(chat_id) + "_lck", True)
 
-    send_async(context, chat_id=chat_id, text="Got it!")
+    send_async(context, chat_id=chat_id, text="设置完成!")
 
 
 def quiet(update, context):
@@ -297,7 +285,7 @@ def quiet(update, context):
     # Lock the bot for this chat
     db.set(str(chat_id) + "_quiet", True)
 
-    send_async(context, chat_id=chat_id, text="Got it!")
+    send_async(context, chat_id=chat_id, text="设置完成!")
 
 
 def unquiet(update, context):
@@ -312,7 +300,7 @@ def unquiet(update, context):
     # Lock the bot for this chat
     db.set(str(chat_id) + "_quiet", False)
 
-    send_async(context, chat_id=chat_id, text="Got it!")
+    send_async(context, chat_id=chat_id, text="设置完成!")
 
 
 def unlock(update, context):
@@ -327,7 +315,7 @@ def unlock(update, context):
     # Unlock the bot for this chat
     db.set(str(chat_id) + "_lck", False)
 
-    send_async(context, chat_id=chat_id, text="Got it!")
+    send_async(context, chat_id=chat_id, text="设置完成!")
 
 
 def empty_message(update, context):
@@ -347,7 +335,7 @@ def empty_message(update, context):
     if update.message.new_chat_members:
         for new_member in update.message.new_chat_members:
             # Bot was added to a group chat
-            if new_member.username == BOTNAME:
+            if new_member.username == BOT_NAME:
                 return introduce(update, context)
             # Another user joined the chat
             else:
@@ -355,7 +343,7 @@ def empty_message(update, context):
 
     # Someone left the chat
     elif update.message.left_chat_member is not None:
-        if update.message.left_chat_member.username != BOTNAME:
+        if update.message.left_chat_member.username != BOT_NAME:
             return goodbye(update, context)
 
 
@@ -365,9 +353,9 @@ def error(update, context, **kwargs):
 
     try:
         if isinstance(error, TelegramError) and (
-            error.message == "Unauthorized"
-            or error.message == "Have no rights to send a message"
-            or "PEER_ID_INVALID" in error.message
+                error.message == "Unauthorized"
+                or error.message == "Have no rights to send a message"
+                or "PEER_ID_INVALID" in error.message
         ):
             chats = db.get("chats")
             chats.remove(update.message.chat_id)
