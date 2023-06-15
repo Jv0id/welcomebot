@@ -23,4 +23,4 @@ jobs:
         with:
           context: .
           push: true
-          tags: jp0id/telegram-welcome-bot:latest
+          tags: jp0id/telegram-single-welcome-bot:latest
