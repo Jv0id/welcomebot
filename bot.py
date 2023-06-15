@@ -159,7 +159,7 @@ def introduce(update, context):
 
     text = (
         f"你好 {update.message.chat.title}! "
-        "现在我会用一条友好的消息来欢迎每一个进入这个聊天的人 😊 \n使用/help 来获取更多信息!"
+        "现在我会用一条友好的消息来欢迎每一个进入这个聊天的人 😊 \n使用 /help 来获取更多信息!"
         f"Hello {update.message.chat.title}! "
         "I will now greet anyone who joins this chat with a nice message 😊 \nCheck the /help command for more info!"
     )
