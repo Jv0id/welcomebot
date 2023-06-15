@@ -9,5 +9,5 @@ The file is prepared to be run by anyone by filling out the blanks in the config
 ## How to use
 
 ```shell
-docker run -d --name telegram-welcomr-bot -e BOT_NAME="xxx" -e TOKEN="" jp0id/telegram-single-welcome-bot:latest
+docker run -d --name telegram-welcome-bot -e BOT_NAME="xxx" -e TOKEN="" jp0id/telegram-single-welcome-bot:latest
 ```
